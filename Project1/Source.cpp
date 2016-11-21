@@ -97,7 +97,7 @@ void display(void)
 	a = "Use J,N,K,M keys to change shape";
 
 	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(0.0, 0.0, 1.0); drawGraphW(beta_*1.0 / beta_gran, gini_*1.0 / gini_gran, 0.01);
+	glColor3f(0.0, 0.0, 1.0); drawGraphW(beta_*1.0 / beta_gran, gini_*1.0 / gini_gran, 0.02);
 	//glColor3f(1.0, 0.0, 0.0); drawGraphW(.3, .5, .001);
 	//glColor3f(1.0, 1.0, 0.0); drawGraphW(.35, .5, .005);
 	//glColor3f(1.0, 0.0, 1.0); drawGraphW(.40, .4, .01);
