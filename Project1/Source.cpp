@@ -78,7 +78,7 @@ void handleKeypress(unsigned char key, //The key that was pressed
 		inputNullify(); glutPostRedisplay(); break;
 	case 13:
 	    if (inputbox_string_len>0) {
-	    inp_value[inp_flag]=static_cast<int>(atof(inputbox_string.c_str())*inp_gran[inp_flag]/inp_format1[inp_flag]);
+	    inp_value[inp_flag]=static_cast<int>(roundf(atof(inputbox_string.c_str())*inp_gran[inp_flag]/inp_format1[inp_flag]));
         inp_value[inp_flag]=min(max(inp_value[inp_flag], inp_min[inp_flag]),inp_max[inp_flag]);}
         inputNullify();
         glutPostRedisplay(); break;
