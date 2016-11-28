@@ -16,20 +16,24 @@ string ftoa(double value, string unit="") {
 int w_width = 640; int w_height = 480;
 int inp_flag=0; int inp_size=6;
 
-int gini_ = 35124; int gini_gran = 100000; int gini_step=500;
-int gini2_ = 55451;
-int badrate_ = 30001; int badrate_gran = 100000; int badrate_step=500;
-int apprate_ = 70001; int apprate_gran = 100000; int apprate_step=500;
-int beta_ = 251; int beta_gran = 1000; int beta_step=5;
-int steps_ = 0; int steps_gran = 9; int steps_step=1;
+//int gini_ = 35124; int gini_gran = 100000; int gini_step=500;
+//int gini2_ = 55451;
+//int badrate_ = 30001; int badrate_gran = 100000; int badrate_step=500;
+//int apprate_ = 70001; int apprate_gran = 100000; int apprate_step=500;
+//int beta_ = 251; int beta_gran = 1000; int beta_step=5;
+//int steps_ = 0; int steps_gran = 9; int steps_step=1;
 
 string inp_string [6] = {"GINI1:", "GINI2:", "Beta:", "Total bad rate:", "Approval rate:", "Step size (pp):"};
 int inp_value [6] = {35124, 55451, 251, 30001, 70001, 0};
 int inp_gran [6] = {100000, 100000, 1000, 100000, 100000, 9};
+int inp_min [6] = {0, 0, 0, 1, 1, 0};
+int inp_max [6] = {100000, 100000, 1000, 99999, 99999, 9};
 int inp_step [6] = {500, 500, 5, 500, 500, 1};
 float inp_xs [6] = {.02, .02, .02, .6, .6, .6};
 float inp_x [6] = {.2, .2, .2, 1.1, 1.1, 1.1};
 float inp_y [6] = {-.1, -.2, -.3, -.1, -.2, -.3};
+float inp_format1 [6] = {100, 100, 1, 100, 100, 1};
+string inp_format2 [6] = {"%", "%", "", "%", "%", " pp"};
 bool inp_numstep[6] = {false,false,false,false,false,true};
 float numsteps[10] = {1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01,0.005, 0.002, 0.001};
 
@@ -56,13 +60,13 @@ void handleSpecialpress(int key, //The key that was pressed
 	int x, int y) {    //The current mouse coordinates
 	switch (key) {
 	case GLUT_KEY_UP:
-		if (inp_value[inp_flag] < inp_gran[inp_flag]) { inp_value[inp_flag] = min(inp_value[inp_flag] + inp_step[inp_flag],inp_gran[inp_flag]); glutPostRedisplay(); } break;
+		inp_value[inp_flag] = min(inp_value[inp_flag] + inp_step[inp_flag],inp_max[inp_flag]); glutPostRedisplay(); break;
 	case GLUT_KEY_DOWN:
-		if (inp_value[inp_flag] > 0) { inp_value[inp_flag]= max(0,inp_value[inp_flag]- inp_step[inp_flag]); glutPostRedisplay(); } break;
+		inp_value[inp_flag]= max(inp_min[inp_flag],inp_value[inp_flag]- inp_step[inp_flag]); glutPostRedisplay(); break;
 	case GLUT_KEY_RIGHT:
-		if (inp_value[inp_flag] < inp_gran[inp_flag]) { inp_value[inp_flag] = min(inp_value[inp_flag] + 1,inp_gran[inp_flag]); glutPostRedisplay(); } break;
+		inp_value[inp_flag] = min(inp_value[inp_flag] + 1,inp_max[inp_flag]); glutPostRedisplay(); break;
 	case GLUT_KEY_LEFT:
-		if (inp_value[inp_flag] > 0) {inp_value[inp_flag]= max(0,inp_value[inp_flag]- 1); glutPostRedisplay(); } break;
+		inp_value[inp_flag]= max(inp_min[inp_flag],inp_value[inp_flag]- 1); glutPostRedisplay(); break;
 	}
 }
 
@@ -145,9 +149,9 @@ void drawInputArea()
     for (i=0;i<inp_size;i++) {
     drawtext(inp_xs[i],inp_y[i],0.0005, inp_string[i]);
     if (inp_numstep[i])
-        {drawtext(inp_x[i],inp_y[i],0.0005, numstepsize(inp_value[i]," pp"));}
+        {drawtext(inp_x[i],inp_y[i],0.0005, numstepsize(inp_value[i],inp_format2[i]));}
     else
-        {drawtext(inp_x[i],inp_y[i],0.0005, ftoa(inp_value[i]*100.0 / inp_gran[i], "%"));}
+        {drawtext(inp_x[i],inp_y[i],0.0005, ftoa(inp_value[i]*inp_format1[i] / inp_gran[i], inp_format2[i]));}
     }
 
     glPopMatrix();
@@ -255,8 +259,8 @@ void display(void)
         glTranslatef(-.95, -.8, 1);
         glScalef(.8, .8*w_width*1.0/w_height, 1);
         drawGraphArea();
-        glColor3f(0.0, 0.0, 1.0); drawGraph(beta_*1.0 / beta_gran, gini_*1.0 / gini_gran, 4);
-        glColor3f(1.0, 0.0, 0.0); drawGraph(beta_*1.0 / beta_gran, gini2_*1.0 / gini_gran, 4);
+        glColor3f(0.0, 0.0, 1.0); drawGraph(inp_value[2]*1.0 / inp_gran[2], inp_value[0]*1.0 / inp_gran[0], 4);
+        glColor3f(1.0, 0.0, 0.0); drawGraph(inp_value[2]*1.0 / inp_gran[2], inp_value[1]*1.0 / inp_gran[1], 4);
 	glPopMatrix();
 
     glLineWidth(1);
