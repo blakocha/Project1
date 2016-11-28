@@ -13,6 +13,20 @@ string ftoa(double value, string unit="") {
 	return o.str();
 }
 
+string ctoa(unsigned char cyfra, string unit="") {
+	ostringstream o;
+	o << cyfra;
+	return o.str();
+}
+
+
+
+//string atof(string value) {
+//    float o;
+//	o << value;
+//	return o();
+//}
+
 int w_width = 640; int w_height = 480;
 int inp_flag=0; int inp_size=6;
 
@@ -36,6 +50,16 @@ float inp_format1 [6] = {100, 100, 1, 100, 100, 1};
 string inp_format2 [6] = {"%", "%", "", "%", "%", " pp"};
 bool inp_numstep[6] = {false,false,false,false,false,true};
 float numsteps[10] = {1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01,0.005, 0.002, 0.001};
+bool inputbox_flag=false;
+string inputbox_string="";
+int inputbox_string_len=0;
+bool inputbox_comma=false;
+
+
+void inputNullify() {
+		inputbox_string=""; inputbox_string_len=0; inputbox_flag=false;
+		inputbox_comma=false;
+}
 
 string numstepsize(int value, string unit="") {
 	ostringstream o;
@@ -49,12 +73,31 @@ void handleKeypress(unsigned char key, //The key that was pressed
 	case 27: //Escape key
 		exit(0); //Exit the program
 	case 9:
-		inp_flag = (inp_flag + 1)%inp_size ; glutPostRedisplay(); break;
+		inp_flag = (inp_flag + 1)%inp_size ; inputNullify(); glutPostRedisplay(); break;
+	case 8:
+		inputNullify(); glutPostRedisplay(); break;
+	case 13:
+	    if (inputbox_string_len>0) {
+	    inp_value[inp_flag]=static_cast<int>(atof(inputbox_string.c_str())*inp_gran[inp_flag]/inp_format1[inp_flag]);
+        inp_value[inp_flag]=min(max(inp_value[inp_flag], inp_min[inp_flag]),inp_max[inp_flag]);}
+        inputNullify();
+        glutPostRedisplay(); break;
 	case 'q':
 		exit(0);
 	}
-}
 
+	if (key>='0' and key<='9') {
+            inputbox_flag=true;
+            inputbox_string=inputbox_string+ctoa(key);
+            inputbox_string_len++; glutPostRedisplay();};
+
+	if (key=='.') {
+            if (inputbox_comma==false)
+            {inputbox_comma=true;
+            inputbox_string=inputbox_string+'.';
+            inputbox_string_len++; glutPostRedisplay();};
+	}
+}
 
 void handleSpecialpress(int key, //The key that was pressed
 	int x, int y) {    //The current mouse coordinates
@@ -113,6 +156,29 @@ void drawtext(float x_pos, float y_pos, float scale, string text)
 	glutStrokeString(GLUT_STROKE_ROMAN, (unsigned char*)&text[0u]);
 	glPopMatrix();
 }
+
+
+void drawInputBox()
+{
+    float w1=0.02;
+    glPushMatrix();
+    glTranslatef(-.9,.8,0);
+	glBegin(GL_TRIANGLE_STRIP);
+        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
+        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]+.1-w1, 0);
+        glVertex3f(inp_x[inp_flag]+.4-w1, inp_y[inp_flag]+.1-w1, 0);
+        glVertex3f(inp_x[inp_flag]+.4-w1, inp_y[inp_flag]-w1, 0);
+        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
+    glEnd();
+    glColor3f(0,0,0);
+    glLineWidth(2);
+    drawtext(inp_x[inp_flag],inp_y[inp_flag],0.0005, inputbox_string);
+    glLineWidth(1);
+    glPopMatrix();
+
+}
+
+
 
 void drawInputSelection()
 {
@@ -269,6 +335,9 @@ void display(void)
 	glColor3f(.8, .8, 0);
     drawInputArea();
     drawOutputArea();
+    glColor3f(.2, .2, .2);
+//	if (inputbox_flag==true) {drawInputBox();};
+	if (inputbox_flag==true and inp_numstep[inp_flag]==false) {drawInputBox();};
 	glutSwapBuffers();
 }
 
