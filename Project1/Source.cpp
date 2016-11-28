@@ -4,6 +4,7 @@
 #include <math.h>
 //#include <string>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -86,7 +87,7 @@ void handleKeypress(unsigned char key, //The key that was pressed
 		exit(0);
 	}
 
-	if (key>='0' and key<='9') {
+	if (key>='0' && key<='9') {
             inputbox_flag=true;
             inputbox_string=inputbox_string+ctoa(key);
             inputbox_string_len++; glutPostRedisplay();};
@@ -337,7 +338,7 @@ void display(void)
     drawOutputArea();
     glColor3f(.2, .2, .2);
 //	if (inputbox_flag==true) {drawInputBox();};
-	if (inputbox_flag==true and inp_numstep[inp_flag]==false) {drawInputBox();};
+	if (inputbox_flag==true && inp_numstep[inp_flag]==false) {drawInputBox();};
 	glutSwapBuffers();
 }
 
