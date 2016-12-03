@@ -21,22 +21,8 @@ string ctoa(unsigned char cyfra, string unit="") {
 }
 
 
-
-//string atof(string value) {
-//    float o;
-//	o << value;
-//	return o();
-//}
-
 int w_width = 640; int w_height = 480;
 int inp_flag=0; int inp_size=6;
-
-//int gini_ = 35124; int gini_gran = 100000; int gini_step=500;
-//int gini2_ = 55451;
-//int badrate_ = 30001; int badrate_gran = 100000; int badrate_step=500;
-//int apprate_ = 70001; int apprate_gran = 100000; int apprate_step=500;
-//int beta_ = 251; int beta_gran = 1000; int beta_step=5;
-//int steps_ = 0; int steps_gran = 9; int steps_step=1;
 
 string inp_string [6] = {"GINI1:", "GINI2:", "Beta:", "Total bad rate:", "Approval rate:", "Step size (pp):"};
 int inp_value [6] = {35124, 55451, 251, 30001, 70001, 0};
@@ -55,6 +41,15 @@ bool inputbox_flag=false;
 string inputbox_string="";
 int inputbox_string_len=0;
 bool inputbox_comma=false;
+double outp_badratereduction=-.99999999;
+double outp_approvalincrease=.99999;
+double outp_badrate1=.99999;
+double outp_badrate2=.99999;
+double outp_apprate3=.99999;
+double outp_gini1=.99999;
+double outp_gini2=.99999;
+double outp_gini3=.99999;
+
 
 
 void inputNullify() {
@@ -239,9 +234,9 @@ void drawOutputArea()
 
     drawtext(0.02,.05,0.0005, "Outputs:");
     drawtext(0.02,-.1,0.0005, "Bad rate reduction:");
-    drawtext(0.65,-.1,0.0005, "-99.999%");
+    drawtext(0.65,-.1,0.0005, ftoa(outp_badratereduction*100, "%"));
     drawtext(0.02,-.2,0.0005, "Approval increase:");
-    drawtext(0.65,-.2,0.0005, "+99.999%");
+    drawtext(0.65,-.2,0.0005, ftoa(outp_approvalincrease*100, "%"));
 
 	glBegin(GL_LINE_LOOP);
         glVertex3f(0, 0, 0);
@@ -252,19 +247,19 @@ void drawOutputArea()
 
     int outputstep=90;
     drawtext(0.02,-.4,0.00050, "Initial bad rate in approved:");
-    drawtext(0.8,-.4,0.00050, "99.999%");
+    drawtext(0.8,-.4,0.00050, ftoa(outp_badrate1*100, "%"));
     drawtext(0.02,-.4-outputstep*1/1000.0,0.00045, "Reduced bad rate in approved:");
-    drawtext(0.8,-.4-outputstep*1/1000.0,0.00050, "99.999%");
+    drawtext(0.8,-.4-outputstep*1/1000.0,0.00050, ftoa(outp_badrate2*100, "%"));
     drawtext(0.02,-.4-outputstep*2/1000.0,0.00050, "Increased approval rate:");
-    drawtext(0.8,-.4-outputstep*2/1000.0,0.00050, "99.999%");
+    drawtext(0.8,-.4-outputstep*2/1000.0,0.00050, ftoa(outp_apprate3*100, "%"));
     drawtext(0.02,-.4-outputstep*3/1000.0,0.00050, "Initial GINI on approved:");
-    drawtext(0.8,-.4-outputstep*3/1000.0,0.00050, "99.999%");
+    drawtext(0.8,-.4-outputstep*3/1000.0,0.00050, ftoa(outp_gini1*100, "%"));
     drawtext(0.02,-.4-outputstep*4/1000.0,0.00050, "New GINI on approved");
     drawtext(0.02,-.4-outputstep*5/1000.0,0.00050, "    (bad rate reduction):");
-    drawtext(0.8,-.4-outputstep*5/1000.0,0.00050, "99.999%");
+    drawtext(0.8,-.4-outputstep*5/1000.0,0.00050, ftoa(outp_gini2*100, "%"));
     drawtext(0.02,-.4-outputstep*6/1000.0,0.00050, "New GINI on approved:");
     drawtext(0.02,-.4-outputstep*7/1000.0,0.00050, "    (approval reduction):");
-    drawtext(0.8,-.4-outputstep*7/1000.0,0.00050, "99.999%");
+    drawtext(0.8,-.4-outputstep*7/1000.0,0.00050, ftoa(outp_gini3*100, "%"));
 
 	glPopMatrix();
 }
@@ -281,43 +276,160 @@ void drawGraph(float beta, float gini, float width)
 	glEnd();
 }
 
-void drawGraphW(float beta, float gini, float width)
+void recalculate(float gini1, float gini2, float beta, float badrate, float apprate, float stepsize)
 {
-	float gran = 0.001;
-	float t, x, y, x_pop = 0, y_pop = -gran, mn;
+    int t;
+    double x;
+    double y1, y1_prev;
+    double goods1[100];
+    double bads1[100];
+    double total1[100];
+    double mbadrate1[100];
+    double approved_temp1;
+    bool approved_temp_flag1;
+    double approved_flag1[100];
+    double approved1[100];
+    double badrate_approved1;
+    double approved_good1_temp;
+    double approved_good1[100];
+    double approved_bad1_temp;
+    double approved_bad1[100];
+    double approved_gini1;
 
-	glBegin(GL_TRIANGLE_STRIP);
-	for (t = 0; t <= 1; t += gran) {
-		x = t;
-		y = beta*(pow(x, (1 - gini) / (1 + gini))) + (1 - beta)*(1 - pow((1 - x), (1 + gini) / (1 - gini)));
-		mn = width / sqrt(pow(x - x_pop, 2) + pow(y - y_pop, 2));
-		glVertex3f(1.6*x - .8 + mn*(y - y_pop), 1.6*y - .8 - mn*(x - x_pop), 0);
-		glVertex3f(1.6*x - .8 - mn*(y - y_pop), 1.6*y - .8 + mn*(x - x_pop), 0);
-		x_pop = x;
-		y_pop = y;
+    double y2, y2_prev;
+    double goods2[100];
+    double bads2[100];
+    double total2[100];
+    double mbadrate2[100];
+    double approved_temp2;
+    bool approved_temp_flag2;
+    double approved_flag2[100];
+    double approved2[100];
+    double badrate_approved2;
+    double approved_good2_temp;
+    double approved_good2[100];
+    double approved_bad2_temp;
+    double approved_bad2[100];
+    double approved_gini2;
+
+    int numberofsteps=100/stepsize;
+
+    cout << "GINI 1" << gini1 << endl;
+    cout << "GINI 2" << gini2 << endl;
+
+
+    y1_prev=0;
+    y2_prev=0;
+    for (t = 0; t < numberofsteps; t++)
+    {
+
+        x = (t+1)*stepsize/numberofsteps;
+        y1 = beta*(pow(x, (1 - gini1) / (1 + gini1))) + (1 - beta)*(1 - pow((1 - x), (1 + gini1) / (1 - gini1)));
+        y2 = beta*(pow(x, (1 - gini2) / (1 + gini2))) + (1 - beta)*(1 - pow((1 - x), (1 + gini2) / (1 - gini2)));
+        goods1[t]=(1-badrate)*stepsize/numberofsteps;
+        bads1[t]=badrate*(y1-y1_prev);
+        total1[t]=goods1[t]+bads1[t];
+        mbadrate1[t]=bads1[t]/total1[t];
+        y1_prev=y1*1;
+        goods2[t]=(1-badrate)*stepsize/numberofsteps;
+        bads2[t]=badrate*(y2-y2_prev);
+        total2[t]=goods2[t]+bads2[t];
+        mbadrate2[t]=bads2[t]/total2[t];
+        y2_prev=y2*1;
 	}
-	glEnd();
+
+    approved_temp1=0;
+    approved_temp_flag1=true;
+    approved_temp2=0;
+    approved_temp_flag2=true;
+
+    for (t = numberofsteps-1; t >=0; t--)
+    {
+        if (approved_temp1+total1[t]<apprate && approved_temp_flag1==true) {
+            approved1[t]=total1[t];
+            approved_temp1=approved_temp1+total1[t];
+            approved_flag1[t]=1;
+        }
+        else if (approved_temp1+total1[t]>=apprate && approved_temp_flag1==true) {
+            approved_flag1[t]=(apprate-approved_temp1)/total1[t];
+            approved1[t]=approved_flag1[t]*total1[t];
+            approved_temp1=approved_temp1+approved1[t];
+            approved_temp_flag1=false;
+        }
+        else if (approved_temp1+total1[t]>=apprate && approved_temp_flag1==false) {
+            approved1[t]=0;
+            approved_flag1[t]=0;
+        }
+
+        if (approved_temp2+total2[t]<apprate && approved_temp_flag2==true) {
+            approved2[t]=total2[t];
+            approved_temp2=approved_temp2+total2[t];
+            approved_flag2[t]=1;
+        }
+        else if (approved_temp2+total2[t]>=apprate && approved_temp_flag2==true) {
+            approved_flag2[t]=(apprate-approved_temp2)/total2[t];
+            approved2[t]=approved_flag2[t]*total2[t];
+            approved_temp2=approved_temp2+approved2[t];
+            approved_temp_flag2=false;
+        }
+        else if (approved_temp2+total2[t]>=apprate && approved_temp_flag2==false) {
+            approved2[t]=0;
+            approved_flag2[t]=0;
+        }
+        badrate_approved1=badrate_approved1+mbadrate1[t]*approved1[t];
+        badrate_approved2=badrate_approved2+mbadrate2[t]*approved2[t];
+    }
+
+    badrate_approved1=badrate_approved1/approved_temp1;
+    badrate_approved2=badrate_approved2/approved_temp2;
+
+    approved_bad1_temp=0;
+    approved_good1_temp=0;
+    approved_gini1=0;
+    approved_bad2_temp=0;
+    approved_good2_temp=0;
+    approved_gini2=0;
+
+    for (t = 0; t < numberofsteps; t++)
+    {
+        approved_good1[t]=approved_good1_temp+goods1[t]*approved_flag1[t]/(1-badrate_approved1)/approved_temp1;
+        approved_bad1[t]=approved_bad1_temp+bads1[t]*approved_flag1[t]/badrate_approved1/approved_temp1;
+        approved_gini1=approved_gini1+(approved_good1[t]-approved_good1_temp)*(approved_bad1[t]+approved_bad1_temp)/2;
+        approved_good1_temp=approved_good1[t];
+        approved_bad1_temp=approved_bad1[t];
+
+        approved_good2[t]=approved_good2_temp+goods2[t]*approved_flag2[t]/(1-badrate_approved2)/approved_temp2;
+        approved_bad2[t]=approved_bad2_temp+bads2[t]*approved_flag2[t]/badrate_approved2/approved_temp2;
+        approved_gini2=approved_gini2+(approved_good2[t]-approved_good2_temp)*(approved_bad2[t]+approved_bad2_temp)/2;
+        approved_good2_temp=approved_good2[t];
+        approved_bad2_temp=approved_bad2[t];
+    }
+
+    approved_gini1=approved_gini1*2-1;
+    approved_gini2=approved_gini2*2-1;
+
+    for (t = 0; t < numberofsteps; t++)
+    {
+     cout << x << " " << y1 << " " << goods1[t] << "  " << bads1[t] << " " << total1[t] << " "
+     << mbadrate1[t] << " " << approved1[t] << " " << approved_good1[t] << " " << approved_bad1[t] << " " << endl;
+    }
+
+    cout << "Approval rate: " << approved_temp1 <<endl;
+    cout << "Bad rate on approved: " << badrate_approved1 << endl;
+    cout << "Approved GINI: " << approved_gini1 <<endl;
+    cout << "Approval rate 2: " << approved_temp2 <<endl;
+    cout << "Bad rate on approved 2: " << badrate_approved2 << endl;
+    cout << "Approved GINI 2: " << approved_gini2 <<endl;
+
+    outp_badrate1=badrate_approved1;
+    outp_badrate2=badrate_approved2;
+    outp_badratereduction=(badrate_approved2-badrate_approved1)/badrate_approved1;
+    outp_gini1=approved_gini1;
+    outp_gini2=approved_gini2;
+
+
 }
 
-
-void drawGraphWB(float beta, float gini, float width)
-{
-
-	float gran = 0.001;
-	float t, x, y, x_pop = 0, y_pop = -gran, mn;
-
-	glBegin(GL_TRIANGLE_STRIP);
-	for (t = 0; t <= 1; t += gran) {
-		x = t;
-		y = beta*(pow(x, (1 - gini) / (1 + gini))) + (1 - beta)*(1 - pow((1 - x), (1 + gini) / (1 - gini)));
-		mn = width / sqrt(pow(x - x_pop, 2) + pow(y - y_pop, 2));
-		glVertex3f(x + mn*(y - y_pop), y - mn*(x - x_pop), 0);
-		glVertex3f(x -  - mn*(y - y_pop), y + mn*(x - x_pop), 0);
-		x_pop = x;
-		y_pop = y;
-	}
-	glEnd();
-}
 
 void display(void)
 {
@@ -331,13 +443,20 @@ void display(void)
 	glPopMatrix();
 
     glLineWidth(1);
-	glColor3f(.2, .2, .2);
+	glColor3f(.4, .4, .4);
     drawInputSelection();
 	glColor3f(.8, .8, 0);
     drawInputArea();
+//void recalculate main(float gini1, float gini2, float beta, float badrate, float apprate, float stepsize)
+    cout << "GINI value 1: " << inp_value[0] << endl;
+    cout << "GINI value 2: " << inp_value[1] << endl;
+    cout << "GINI gran 1: " << inp_gran[0] << endl;
+    cout << "GINI 1: " << inp_value[0]*1.0/inp_gran[0] << endl;
+
+    if (inputbox_flag==false)
+    {recalculate(inp_value[0]*1.0/inp_gran[0], inp_value[1]*1.0/inp_gran[1], inp_value[2]*1.0/inp_gran[2], inp_value[3]*1.0/inp_gran[3], inp_value[4]*1.0/inp_gran[4], 1);}
     drawOutputArea();
-    glColor3f(.2, .2, .2);
-//	if (inputbox_flag==true) {drawInputBox();};
+    glColor3f(.4, .4, .4);
 	if (inputbox_flag==true && inp_numstep[inp_flag]==false) {drawInputBox();};
 	glutSwapBuffers();
 }
@@ -351,7 +470,6 @@ int main(int argc, char **argv)
 	glutDisplayFunc(display);
 	glutKeyboardFunc(handleKeypress);
     glutSpecialFunc(handleSpecialpress);
-
 	glutMainLoop();
 	return 0;
 }
