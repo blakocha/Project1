@@ -289,7 +289,7 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     bool approved_temp_flag1;
     double approved_flag1[100];
     double approved1[100];
-    double badrate_approved1;
+    double badrate_approved1=0;
     double approved_good1_temp;
     double approved_good1[100];
     double approved_bad1_temp;
@@ -305,7 +305,7 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     bool approved_temp_flag2;
     double approved_flag2[100];
     double approved2[100];
-    double badrate_approved2;
+    double badrate_approved2=0;
     double approved_good2_temp;
     double approved_good2[100];
     double approved_bad2_temp;
