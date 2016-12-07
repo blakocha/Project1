@@ -314,10 +314,25 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     double approved_bad2[100];
     double approved_gini2;
 
+    double badratec3[100];
+    double badratec_good3;
+    double badratec_bad3;
+    double badrate_temp3;
+    double approved_temp3;
+    bool approved_temp_flag3;
+    double approved_flag3[100];
+    double approved3[100];
+    double approved_good3_temp;
+    double approved_good3[100];
+    double approved_bad3_temp;
+    double approved_bad3[100];
+    double approved_gini3;
+    double badrate_approved3=0;
+
     int numberofsteps=100/stepsize;
 
-    if(printdebug) {cout << "GINI 1" << gini1 << endl;}
-    if(printdebug) {cout << "GINI 2" << gini2 << endl;}
+    if(printdebug) {cout << "GINI 1: " << gini1 << endl;}
+    if(printdebug) {cout << "GINI 2: " << gini2 << endl;}
 
 
     y1_prev=0;
@@ -378,6 +393,7 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
             approved2[t]=0;
             approved_flag2[t]=0;
         }
+
         badrate_approved1=badrate_approved1+mbadrate1[t]*approved1[t];
         badrate_approved2=badrate_approved2+mbadrate2[t]*approved2[t];
     }
@@ -385,12 +401,57 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     badrate_approved1=badrate_approved1/approved_temp1;
     badrate_approved2=badrate_approved2/approved_temp2;
 
+//Third scenario calculation
+
+	badratec_bad3=0;
+    badratec_good3=0;
+    badrate_temp3=0;
+    approved_temp_flag3=true;
+    approved_temp3=0;
+    badrate_approved3=0;
+
+    for (t = numberofsteps-1; t >=0; t--)
+    {
+        badratec_bad3=badratec_bad3+ bads2[t];
+        badratec_good3=badratec_good3+goods2[t];
+        badratec3[t]=badratec_bad3/(badratec_bad3+badratec_good3);
+
+        if (badratec3[t]<badrate_approved1 && approved_temp_flag3==true) {
+            approved3[t]=total2[t];
+            badrate_temp3=badratec3[t];
+            approved_temp3=approved_temp3+approved3[t];
+            approved_flag3[t]=1;
+        }
+        else if (badratec3[t]>=badrate_approved1 && approved_temp_flag3==true) {
+            approved_flag3[t]=(badrate_approved1-badrate_temp3)/(badratec3[t]-badrate_temp3);
+            approved3[t]=approved_flag3[t]*total2[t];
+            badrate_temp3=badratec3[t];
+            approved_temp3=approved_temp3+approved3[t];
+            approved_temp_flag3=false;
+        }
+        else if (badratec3[t]>=badrate_approved1 && approved_temp_flag3==false) {
+            approved3[t]=0;
+            approved_flag3[t]=0;
+        }
+
+        badrate_approved3=badrate_approved3+mbadrate2[t]*approved3[t];
+
+   }
+
+badrate_approved3=badrate_approved3/approved_temp3;
+
+
+//GINI on approved calculated for the base scenario, scenario 1 and scenario 2
+
     approved_bad1_temp=0;
     approved_good1_temp=0;
     approved_gini1=0;
     approved_bad2_temp=0;
     approved_good2_temp=0;
     approved_gini2=0;
+    approved_bad3_temp=0;
+    approved_good3_temp=0;
+    approved_gini3=0;
 
     for (t = 0; t < numberofsteps; t++)
     {
@@ -405,16 +466,26 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
         approved_gini2=approved_gini2+(approved_good2[t]-approved_good2_temp)*(approved_bad2[t]+approved_bad2_temp)/2;
         approved_good2_temp=approved_good2[t];
         approved_bad2_temp=approved_bad2[t];
+
+        approved_good3[t]=approved_good3_temp+goods2[t]*approved_flag3[t]/(1-badrate_approved3)/approved_temp3;
+        approved_bad3[t]=approved_bad3_temp+bads2[t]*approved_flag3[t]/badrate_approved3/approved_temp3;
+        approved_gini3=approved_gini3+(approved_good3[t]-approved_good3_temp)*(approved_bad3[t]+approved_bad3_temp)/2;
+        approved_good3_temp=approved_good3[t];
+        approved_bad3_temp=approved_bad3[t];
     }
 
     approved_gini1=approved_gini1*2-1;
     approved_gini2=approved_gini2*2-1;
+    approved_gini3=approved_gini3*2-1;
+
+//Printing the table to the console for debugging!
 
     if(printdebug) {
     for (t = 0; t < numberofsteps; t++)
     {
-     cout << x << " " << y1 << " " << goods1[t] << "  " << bads1[t] << " " << total1[t] << " "
-     << mbadrate1[t] << " " << approved1[t] << " " << approved_good1[t] << " " << approved_bad1[t] << " " << endl;
+     cout << goods2[t] << "  " << bads2[t] << " " << total2[t] << " "
+     << mbadrate2[t] << " " << badratec3[t] << " " << approved3[t] << " " << approved_flag3[t] << " "
+     << approved_good3[t] << " " << approved_bad3[t] << " " << endl;
     }
 
 
@@ -424,17 +495,30 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     cout << "Approval rate 2: " << approved_temp2 <<endl;
     cout << "Bad rate on approved 2: " << badrate_approved2 << endl;
     cout << "Approved GINI 2: " << approved_gini2 <<endl;
+    cout << "Approval rate 3: " << approved_temp3 <<endl;
+    cout << "Bad rate on approved 3: " << badrate_approved3 << endl;
+    cout << "Approved GINI 3: " << approved_gini3 <<endl;
     }
 
     outp_badrate1=badrate_approved1;
     outp_badrate2=badrate_approved2;
     outp_badratereduction=(badrate_approved2-badrate_approved1)/badrate_approved1;
+    outp_apprate3=approved_temp3;
+    outp_approvalincrease=(approved_temp3-approved_temp1)/approved_temp1;
     outp_gini1=approved_gini1;
     outp_gini2=approved_gini2;
+    outp_gini3=approved_gini3;
+
+
+//Printing the two final results:
+
+    if(printdebug) {
+    cout << "Bad rate reduction: " << outp_badratereduction << endl;
+    cout << "Approval increase: " << outp_approvalincrease <<endl;
+    }
 
 
 }
-
 
 void display(void)
 {
