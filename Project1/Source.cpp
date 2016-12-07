@@ -8,6 +8,8 @@
 
 using namespace std;
 
+bool printdebug=true;
+
 string ftoa(double value, string unit="") {
 	ostringstream o;
 	o << value <<unit;
@@ -314,8 +316,8 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
 
     int numberofsteps=100/stepsize;
 
-    cout << "GINI 1" << gini1 << endl;
-    cout << "GINI 2" << gini2 << endl;
+    if(printdebug) {cout << "GINI 1" << gini1 << endl;}
+    if(printdebug) {cout << "GINI 2" << gini2 << endl;}
 
 
     y1_prev=0;
@@ -408,11 +410,13 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     approved_gini1=approved_gini1*2-1;
     approved_gini2=approved_gini2*2-1;
 
+    if(printdebug) {
     for (t = 0; t < numberofsteps; t++)
     {
      cout << x << " " << y1 << " " << goods1[t] << "  " << bads1[t] << " " << total1[t] << " "
      << mbadrate1[t] << " " << approved1[t] << " " << approved_good1[t] << " " << approved_bad1[t] << " " << endl;
     }
+
 
     cout << "Approval rate: " << approved_temp1 <<endl;
     cout << "Bad rate on approved: " << badrate_approved1 << endl;
@@ -420,6 +424,7 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     cout << "Approval rate 2: " << approved_temp2 <<endl;
     cout << "Bad rate on approved 2: " << badrate_approved2 << endl;
     cout << "Approved GINI 2: " << approved_gini2 <<endl;
+    }
 
     outp_badrate1=badrate_approved1;
     outp_badrate2=badrate_approved2;
@@ -448,10 +453,12 @@ void display(void)
 	glColor3f(.8, .8, 0);
     drawInputArea();
 //void recalculate main(float gini1, float gini2, float beta, float badrate, float apprate, float stepsize)
+    if(printdebug) {
     cout << "GINI value 1: " << inp_value[0] << endl;
     cout << "GINI value 2: " << inp_value[1] << endl;
     cout << "GINI gran 1: " << inp_gran[0] << endl;
     cout << "GINI 1: " << inp_value[0]*1.0/inp_gran[0] << endl;
+    }
 
     if (inputbox_flag==false)
     {recalculate(inp_value[0]*1.0/inp_gran[0], inp_value[1]*1.0/inp_gran[1], inp_value[2]*1.0/inp_gran[2], inp_value[3]*1.0/inp_gran[3], inp_value[4]*1.0/inp_gran[4], 1);}
