@@ -5,8 +5,11 @@
 //#include <string>
 #include <sstream>
 #include <algorithm>
+#include <vector>
 
 using namespace std;
+
+typedef vector<double> vec;
 
 bool printdebug=true;
 
@@ -280,56 +283,56 @@ void drawGraph(float beta, float gini, float width)
 
 void recalculate(float gini1, float gini2, float beta, float badrate, float apprate, float stepsize)
 {
+    int numberofsteps=round(100.0/stepsize);
     int t;
     double x;
     double y1, y1_prev;
-    double goods1[100];
-    double bads1[100];
-    double total1[100];
-    double mbadrate1[100];
+    vec goods1(numberofsteps);
+    vec bads1(numberofsteps);
+    vec total1(numberofsteps);
+    vec mbadrate1(numberofsteps);
     double approved_temp1;
     bool approved_temp_flag1;
-    double approved_flag1[100];
-    double approved1[100];
+    vec approved_flag1(numberofsteps);
+    vec approved1(numberofsteps);
     double badrate_approved1=0;
     double approved_good1_temp;
-    double approved_good1[100];
+    vec approved_good1(numberofsteps);
     double approved_bad1_temp;
-    double approved_bad1[100];
+    vec approved_bad1(numberofsteps);
     double approved_gini1;
 
     double y2, y2_prev;
-    double goods2[100];
-    double bads2[100];
-    double total2[100];
-    double mbadrate2[100];
+    vec goods2(numberofsteps);
+    vec bads2(numberofsteps);
+    vec total2(numberofsteps);
+    vec mbadrate2(numberofsteps);
     double approved_temp2;
     bool approved_temp_flag2;
-    double approved_flag2[100];
-    double approved2[100];
+    vec approved_flag2(numberofsteps);
+    vec approved2(numberofsteps);
     double badrate_approved2=0;
     double approved_good2_temp;
-    double approved_good2[100];
+    vec approved_good2(numberofsteps);
     double approved_bad2_temp;
-    double approved_bad2[100];
+    vec approved_bad2(numberofsteps);
     double approved_gini2;
 
-    double badratec3[100];
+    vec badratec3(numberofsteps);
     double badratec_good3;
     double badratec_bad3;
     double badrate_temp3;
     double approved_temp3;
     bool approved_temp_flag3;
-    double approved_flag3[100];
-    double approved3[100];
+    vec approved_flag3(numberofsteps);
+    vec approved3(numberofsteps);
     double approved_good3_temp;
-    double approved_good3[100];
+    vec approved_good3(numberofsteps);
     double approved_bad3_temp;
-    double approved_bad3[100];
+    vec approved_bad3(numberofsteps);
     double approved_gini3;
     double badrate_approved3=0;
 
-    int numberofsteps=100/stepsize;
 
     if(printdebug) {cout << "GINI 1: " << gini1 << endl;}
     if(printdebug) {cout << "GINI 2: " << gini2 << endl;}
@@ -340,15 +343,20 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     for (t = 0; t < numberofsteps; t++)
     {
 
-        x = (t+1)*stepsize/numberofsteps;
+        x = (t+1)*stepsize/100.0;
         y1 = beta*(pow(x, (1 - gini1) / (1 + gini1))) + (1 - beta)*(1 - pow((1 - x), (1 + gini1) / (1 - gini1)));
         y2 = beta*(pow(x, (1 - gini2) / (1 + gini2))) + (1 - beta)*(1 - pow((1 - x), (1 + gini2) / (1 - gini2)));
-        goods1[t]=(1-badrate)*stepsize/numberofsteps;
+        if (t==numberofsteps-1) {
+                y1=1; y2=1;
+                if (printdebug) {cout << x << " " << y1 << " " << y2 << " " << y1_prev << " " << y2_prev << endl;}
+        }
+
+        goods1[t]=(1-badrate)*stepsize/100.0;
         bads1[t]=badrate*(y1-y1_prev);
         total1[t]=goods1[t]+bads1[t];
         mbadrate1[t]=bads1[t]/total1[t];
         y1_prev=y1*1;
-        goods2[t]=(1-badrate)*stepsize/numberofsteps;
+        goods2[t]=(1-badrate)*stepsize/100;
         bads2[t]=badrate*(y2-y2_prev);
         total2[t]=goods2[t]+bads2[t];
         mbadrate2[t]=bads2[t]/total2[t];
@@ -481,11 +489,11 @@ badrate_approved3=badrate_approved3/approved_temp3;
 //Printing the table to the console for debugging!
 
     if(printdebug) {
-    for (t = 0; t < numberofsteps; t++)
+    for (t = numberofsteps-50; t < numberofsteps; t++)
     {
-     cout << goods2[t] << "  " << bads2[t] << " " << total2[t] << " "
-     << mbadrate2[t] << " " << badratec3[t] << " " << approved3[t] << " " << approved_flag3[t] << " "
-     << approved_good3[t] << " " << approved_bad3[t] << " " << endl;
+     cout << goods1[t] << "  " << bads1[t] << " " << total1[t] << " "
+     << mbadrate1[t] << " " << approved_flag1[t] << " " << approved1[t] << " " << approved_good1[t] << " "
+     << approved_bad1[t] << " " << endl;
     }
 
 
@@ -515,10 +523,12 @@ badrate_approved3=badrate_approved3/approved_temp3;
     if(printdebug) {
     cout << "Bad rate reduction: " << outp_badratereduction << endl;
     cout << "Approval increase: " << outp_approvalincrease <<endl;
+    cout << "Number of steps: " << numberofsteps <<endl;
     }
 
 
 }
+
 
 void display(void)
 {
@@ -545,7 +555,7 @@ void display(void)
     }
 
     if (inputbox_flag==false)
-    {recalculate(inp_value[0]*1.0/inp_gran[0], inp_value[1]*1.0/inp_gran[1], inp_value[2]*1.0/inp_gran[2], inp_value[3]*1.0/inp_gran[3], inp_value[4]*1.0/inp_gran[4], 1);}
+    {recalculate(inp_value[0]*1.0/inp_gran[0], inp_value[1]*1.0/inp_gran[1], inp_value[2]*1.0/inp_gran[2], inp_value[3]*1.0/inp_gran[3], inp_value[4]*1.0/inp_gran[4], numsteps[inp_value[5]]);}
     drawOutputArea();
     glColor3f(.4, .4, .4);
 	if (inputbox_flag==true && inp_numstep[inp_flag]==false) {drawInputBox();};
