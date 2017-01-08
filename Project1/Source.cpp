@@ -3,35 +3,50 @@
 #include <gl/freeglut.h>
 #include <math.h>
 //#include <string>
-#include <sstream>
-#include <algorithm>
-#include <vector>
+#include <sstream> //to make sure ftoa function is working correctly amoung others
+#include <algorithm> //to make sure min and max are working correctly
+#include <vector> // vector is used to change precision in numeric calculations
+#include <iomanip> // to make setprecision work in ftoa function...
 
 using namespace std;
 
 typedef vector<double> vec;
 
-bool printdebug=true;
-bool workaround=false;
+//two technical true/false flags for debug (printing debug to the console) and float precision problems workaround
+bool printdebug=false;
+bool workaround=true;
 
-string ftoa(double value, string unit="") {
+//precision of output and input (number of decimal points
+int prec_input=3;
+int prec_output=4;
+int prec_outputmain=6;
+
+//local version of float to text with specified unit and precision
+string ftoa(double value, string unit="", int prec=1) {
 	ostringstream o;
-	o << value <<unit;
+	o << fixed << setprecision(prec) <<value <<unit;
 	return o.str();
 }
 
-string ctoa(unsigned char cyfra, string unit="") {
+//char to txt for digit printing in an input box
+string ctoa(unsigned char digit, string unit="") {
 	ostringstream o;
-	o << cyfra;
+	o << digit;
 	return o.str();
 }
 
-
+//window size
 int w_width = 640; int w_height = 480;
-int inp_flag=0; int inp_size=6;
 
+//input flag - current input to be highlighted
+int inp_flag=0;
+
+//number of inputs
+int inp_size=6;
+
+//input parameters
 string inp_string [6] = {"GINI1:", "GINI2:", "Beta:", "Total bad rate:", "Approval rate:", "Step size (pp):"};
-int inp_value [6] = {35124, 55451, 251, 30001, 70001, 0};
+int inp_value [6] = {55000, 60000, 500, 25000, 55000, 9};
 int inp_gran [6] = {100000, 100000, 1000, 100000, 100000, 9};
 int inp_min [6] = {0, 0, 0, 1, 1, 0};
 int inp_max [6] = {100000, 100000, 1000, 99999, 99999, 9};
@@ -43,10 +58,12 @@ float inp_format1 [6] = {100, 100, 1, 100, 100, 1};
 string inp_format2 [6] = {"%", "%", "", "%", "%", " pp"};
 bool inp_numstep[6] = {false,false,false,false,false,true};
 float numsteps[10] = {1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01,0.005, 0.002, 0.001};
-bool inputbox_flag=false;
-string inputbox_string="";
-int inputbox_string_len=0;
-bool inputbox_comma=false;
+bool inputbox_flag=false; //a flag if input box is active
+string inputbox_string=""; //string being input
+int inputbox_string_len=0; //length of the string being input
+bool inputbox_comma=false; //if a coma has been input
+
+//output parameters
 double outp_badratereduction=-.99999999;
 double outp_approvalincrease=.99999;
 double outp_badrate1=.99999;
@@ -57,11 +74,12 @@ double outp_gini2=.99999;
 double outp_gini3=.99999;
 
 
-
+//a function zeroing the current inputbox
 void inputNullify() {
 		inputbox_string=""; inputbox_string_len=0; inputbox_flag=false;
 		inputbox_comma=false;
 }
+
 
 string numstepsize(int value, string unit="") {
 	ostringstream o;
@@ -71,14 +89,25 @@ string numstepsize(int value, string unit="") {
 
 void handleKeypress(unsigned char key, //The key that was pressed
 	int x, int y) {    //The current mouse coordinates
+    int mod;
+
+    mod=glutGetModifiers(); //to check if Shift is pressed
+
 	switch (key) {
 	case 27: //Escape key
 		exit(0); //Exit the program
-	case 9:
-		inp_flag = (inp_flag + 1)%inp_size ; inputNullify(); glutPostRedisplay(); break;
-	case 8:
+	case 9: //tab
+        if (mod==GLUT_ACTIVE_SHIFT) //if Shift is pressed -> go backwards
+        {if (inp_flag==0)
+            {inp_flag=inp_size-1;}
+            else {inp_flag=inp_flag-1;}
+        }
+        else {inp_flag = (inp_flag + 1)%inp_size ; }; //if shift is not pressed -> proceed +1
+		inputNullify(); //input is cancelled - without enter!
+		glutPostRedisplay(); break;
+	case 8: //backspace pressed - cancel input
 		inputNullify(); glutPostRedisplay(); break;
-	case 13:
+	case 13: //enter pressed
 	    if (inputbox_string_len>0) {
 	    inp_value[inp_flag]=static_cast<int>(roundf(atof(inputbox_string.c_str())*inp_gran[inp_flag]/inp_format1[inp_flag]));
         inp_value[inp_flag]=min(max(inp_value[inp_flag], inp_min[inp_flag]),inp_max[inp_flag]);}
@@ -150,7 +179,7 @@ glPopAttrib();
 
 }
 
-void drawtext(float x_pos, float y_pos, float scale, string text)
+void drawtext2(float x_pos, float y_pos, float scale, string text)
 {
 	glPushMatrix();
 	glTranslatef(x_pos, y_pos, 0);
@@ -159,10 +188,19 @@ void drawtext(float x_pos, float y_pos, float scale, string text)
 	glPopMatrix();
 }
 
+void drawtext(float x_pos, float y_pos, float scale, string text)
+{
+	glPushMatrix();
+	glRasterPos2f(x_pos, y_pos);
+	glScalef(.6, .6, 1);
+	glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*)&text[0u]);
+	glPopMatrix();
+}
+
 
 void drawInputBox()
 {
-    float w1=0.02;
+    float w1=.01;
     glPushMatrix();
     glTranslatef(-.9,.8,0);
 	glBegin(GL_TRIANGLE_STRIP);
@@ -188,11 +226,11 @@ void drawInputSelection()
     glPushMatrix();
     glTranslatef(-.9,.8,0);
 	glBegin(GL_TRIANGLE_STRIP);
-        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
-        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]+.1-w1, 0);
-        glVertex3f(inp_x[inp_flag]+.4-w1, inp_y[inp_flag]+.1-w1, 0);
-        glVertex3f(inp_x[inp_flag]+.4-w1, inp_y[inp_flag]-w1, 0);
-        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
+        glVertex3f(inp_x[inp_flag]-w1+.01, inp_y[inp_flag]-w1, 0);
+        glVertex3f(inp_x[inp_flag]-w1+.01, inp_y[inp_flag]+.1-w1, 0);
+        glVertex3f(inp_x[inp_flag]+.3-w1, inp_y[inp_flag]+.1-w1, 0);
+        glVertex3f(inp_x[inp_flag]+.3-w1, inp_y[inp_flag]-w1, 0);
+        glVertex3f(inp_x[inp_flag]-w1+.01, inp_y[inp_flag]-w1, 0);
     glEnd();
     glPopMatrix();
 
@@ -219,7 +257,7 @@ void drawInputArea()
     if (inp_numstep[i])
         {drawtext(inp_x[i],inp_y[i],0.0005, numstepsize(inp_value[i],inp_format2[i]));}
     else
-        {drawtext(inp_x[i],inp_y[i],0.0005, ftoa(inp_value[i]*inp_format1[i] / inp_gran[i], inp_format2[i]));}
+        {drawtext(inp_x[i],inp_y[i],0.0005, ftoa(inp_value[i]*inp_format1[i] / inp_gran[i], inp_format2[i],prec_input));}
     }
 
     glPopMatrix();
@@ -234,38 +272,38 @@ void drawOutputArea()
 	glBegin(GL_LINE_LOOP);
         glVertex3f(0, 0, 0);
         glVertex3f(0, -1.1, 0);
-        glVertex3f(1.05, -1.1, 0);
-        glVertex3f(1.05, 0, 0);
+        glVertex3f(1.075, -1.1, 0);
+        glVertex3f(1.075, 0, 0);
 	glEnd();
 
     drawtext(0.02,.05,0.0005, "Outputs:");
     drawtext(0.02,-.1,0.0005, "Bad rate reduction:");
-    drawtext(0.65,-.1,0.0005, ftoa(outp_badratereduction*100, "%"));
+    drawtext(0.65,-.1,0.0005, ftoa(outp_badratereduction*100, "%", prec_outputmain));
     drawtext(0.02,-.2,0.0005, "Approval increase:");
-    drawtext(0.65,-.2,0.0005, ftoa(outp_approvalincrease*100, "%"));
+    drawtext(0.65,-.2,0.0005, ftoa(outp_approvalincrease*100, "%", prec_outputmain));
 
 	glBegin(GL_LINE_LOOP);
         glVertex3f(0, 0, 0);
         glVertex3f(0, -.3, 0);
-        glVertex3f(1.05, -.3, 0);
-        glVertex3f(1.05, 0, 0);
+        glVertex3f(1.075, -.3, 0);
+        glVertex3f(1.075, 0, 0);
 	glEnd();
 
     int outputstep=90;
-    drawtext(0.02,-.4,0.00050, "Initial bad rate in approved:");
-    drawtext(0.8,-.4,0.00050, ftoa(outp_badrate1*100, "%"));
-    drawtext(0.02,-.4-outputstep*1/1000.0,0.00045, "Reduced bad rate in approved:");
-    drawtext(0.8,-.4-outputstep*1/1000.0,0.00050, ftoa(outp_badrate2*100, "%"));
-    drawtext(0.02,-.4-outputstep*2/1000.0,0.00050, "Increased approval rate:");
-    drawtext(0.8,-.4-outputstep*2/1000.0,0.00050, ftoa(outp_apprate3*100, "%"));
-    drawtext(0.02,-.4-outputstep*3/1000.0,0.00050, "Initial GINI on approved:");
-    drawtext(0.8,-.4-outputstep*3/1000.0,0.00050, ftoa(outp_gini1*100, "%"));
-    drawtext(0.02,-.4-outputstep*4/1000.0,0.00050, "New GINI on approved");
-    drawtext(0.02,-.4-outputstep*5/1000.0,0.00050, "    (bad rate reduction):");
-    drawtext(0.8,-.4-outputstep*5/1000.0,0.00050, ftoa(outp_gini2*100, "%"));
-    drawtext(0.02,-.4-outputstep*6/1000.0,0.00050, "New GINI on approved:");
-    drawtext(0.02,-.4-outputstep*7/1000.0,0.00050, "    (approval reduction):");
-    drawtext(0.8,-.4-outputstep*7/1000.0,0.00050, ftoa(outp_gini3*100, "%"));
+    drawtext(0.01,-.4,0.00050, "Initial bad rate in approved:");
+    drawtext(0.81,-.4,0.00050, ftoa(outp_badrate1*100, "%", prec_output));
+    drawtext(0.01,-.4-outputstep*1/1000.0,0.00045, "Reduced bad rate in approved:");
+    drawtext(0.81,-.4-outputstep*1/1000.0,0.00050, ftoa(outp_badrate2*100, "%", prec_output));
+    drawtext(0.01,-.4-outputstep*2/1000.0,0.00050, "Increased approval rate:");
+    drawtext(0.81,-.4-outputstep*2/1000.0,0.00050, ftoa(outp_apprate3*100, "%", prec_output));
+    drawtext(0.01,-.4-outputstep*3/1000.0,0.00050, "Initial GINI on approved:");
+    drawtext(0.81,-.4-outputstep*3/1000.0,0.00050, ftoa(outp_gini1*100, "%", prec_output));
+    drawtext(0.01,-.4-outputstep*4/1000.0,0.00050, "New GINI on approved");
+    drawtext(0.01,-.4-outputstep*5/1000.0,0.00050, "    (bad rate reduction):");
+    drawtext(0.81,-.4-outputstep*5/1000.0,0.00050, ftoa(outp_gini2*100, "%", prec_output));
+    drawtext(0.01,-.4-outputstep*6/1000.0,0.00050, "New GINI on approved:");
+    drawtext(0.01,-.4-outputstep*7/1000.0,0.00050, "    (approval reduction):");
+    drawtext(0.81,-.4-outputstep*7/1000.0,0.00050, ftoa(outp_gini3*100, "%", prec_output));
 
 	glPopMatrix();
 }
@@ -534,6 +572,10 @@ badrate_approved3=badrate_approved3/approved_temp3;
 void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
+
+glPushMatrix();
+glTranslatef(0,-.1,0);
+
 	glPushMatrix();
         glTranslatef(-.95, -.8, 1);
         glScalef(.8, .8*w_width*1.0/w_height, 1);
@@ -560,6 +602,8 @@ void display(void)
     drawOutputArea();
     glColor3f(.4, .4, .4);
 	if (inputbox_flag==true && inp_numstep[inp_flag]==false) {drawInputBox();};
+
+glPopMatrix();
 	glutSwapBuffers();
 }
 
@@ -570,8 +614,8 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutCreateWindow("Scoringator");
 	glutDisplayFunc(display);
+	glutSpecialFunc(handleSpecialpress);
 	glutKeyboardFunc(handleKeypress);
-    glutSpecialFunc(handleSpecialpress);
 	glutMainLoop();
 	return 0;
 }
