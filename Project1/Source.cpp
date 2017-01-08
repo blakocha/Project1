@@ -24,6 +24,7 @@ int prec_outputmain=6;
 //local version of float to text with specified unit and precision
 string ftoa(double value, string unit="", int prec=1) {
 	ostringstream o;
+	if (value>=100) {prec=3;} // workaround to not exceed the frames
 	o << fixed << setprecision(prec) <<value <<unit;
 	return o.str();
 }
@@ -73,6 +74,14 @@ double outp_gini1=.99999;
 double outp_gini2=.99999;
 double outp_gini3=.99999;
 
+//colors
+void colorChartOutline() {glColor3f(.8, .8, .8);}
+void colorChartLine1() {glColor3f(0.0, 0.0, 1.0);}
+void colorChartLine2() {glColor3f(1.0, 0.0, 0.0);}
+void colorInputSelection() {glColor3f(.4, .4, .4);}
+void colorInputArea() {glColor3f(.8, .8, .4);}
+void colorHelpArea() {glColor3f(.8, .8, .8);}
+void colorInputText() {glColor3f(0.0,0.0,0.0);}
 
 //a function zeroing the current inputbox
 void inputNullify() {
@@ -146,14 +155,9 @@ void handleSpecialpress(int key, //The key that was pressed
 
 
 
-void init()
-{
-	glClearColor(0, 0, 0, 1.0);
-}
-
 void drawGraphArea()
 {
-	glColor3f(.8, .8, .8);
+	colorChartOutline();
 	glLineWidth(1);
 	glBegin(GL_LINE_LOOP);
 		glVertex3f(0, 0, 0);
@@ -192,8 +196,16 @@ void drawtext(float x_pos, float y_pos, float scale, string text)
 {
 	glPushMatrix();
 	glRasterPos2f(x_pos, y_pos);
-	glScalef(.6, .6, 1);
 	glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char*)&text[0u]);
+	glPopMatrix();
+}
+
+
+void drawtexth(float x_pos, float y_pos, float scale, string text)
+{
+	glPushMatrix();
+	glRasterPos2f(x_pos, y_pos);
+	glutBitmapString(GLUT_BITMAP_HELVETICA_12, (unsigned char*)&text[0u]);
 	glPopMatrix();
 }
 
@@ -202,7 +214,7 @@ void drawInputBox()
 {
     float w1=.01;
     glPushMatrix();
-    glTranslatef(-.9,.8,0);
+    glTranslatef(-.9,.7,0);
 	glBegin(GL_TRIANGLE_STRIP);
         glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
         glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]+.1-w1, 0);
@@ -210,7 +222,7 @@ void drawInputBox()
         glVertex3f(inp_x[inp_flag]+.4-w1, inp_y[inp_flag]-w1, 0);
         glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
     glEnd();
-    glColor3f(0,0,0);
+    colorInputText();
     glLineWidth(2);
     drawtext(inp_x[inp_flag],inp_y[inp_flag],0.0005, inputbox_string);
     glLineWidth(1);
@@ -224,7 +236,7 @@ void drawInputSelection()
 {
     float w1=0.02;
     glPushMatrix();
-    glTranslatef(-.9,.8,0);
+    glTranslatef(-.9,.7,0);
 	glBegin(GL_TRIANGLE_STRIP);
         glVertex3f(inp_x[inp_flag]-w1+.01, inp_y[inp_flag]-w1, 0);
         glVertex3f(inp_x[inp_flag]-w1+.01, inp_y[inp_flag]+.1-w1, 0);
@@ -240,13 +252,13 @@ void drawInputSelection()
 void drawInputArea()
 {
     glPushMatrix();
-    glTranslatef(-.9,.8,0);
+    glTranslatef(-.9,.7,0);
 
 	glBegin(GL_LINE_LOOP);
         glVertex3f(0, 0, 0);
         glVertex3f(0, -0.35, 0);
-        glVertex3f(1.8, -0.35, 0);
-        glVertex3f(1.8, 0, 0);
+        glVertex3f(1.5, -0.35, 0);
+        glVertex3f(1.5, 0, 0);
 	glEnd();
 
     drawtext(0.02,.05,0.0005, "Inputs:");
@@ -264,15 +276,35 @@ void drawInputArea()
 }
 
 
-void drawOutputArea()
+void drawHelpArea()
 {
     glPushMatrix();
-    glTranslatef(-.1,.3,0);
+    glTranslatef(-.6,1.05,0);
 
 	glBegin(GL_LINE_LOOP);
         glVertex3f(0, 0, 0);
-        glVertex3f(0, -1.1, 0);
-        glVertex3f(1.075, -1.1, 0);
+        glVertex3f(0, -.3, 0);
+        glVertex3f(1.55, -.3, 0);
+        glVertex3f(1.55, 0, 0);
+	glEnd();
+
+	drawtexth(0.05,-.06,2,"Use TAB / SHIFT+TAB to select the input variable to be changed. To change ");
+	drawtexth(0.05,-.13,2,"the value of the input variable: (1) use arrows RIGHT/LEFT for small changes, ");
+	drawtexth(0.05,-.20,2,"UP/DOWN for bigger ones or (2) use numeric keys, dot as decimal point + ENTER. ");
+	drawtexth(0.05,-.27,2,"Option (2) not available for step size. Q quits. ");
+
+	glPopMatrix();
+}
+
+void drawOutputArea()
+{
+    glPushMatrix();
+    glTranslatef(-.1,.2,0);
+
+	glBegin(GL_LINE_LOOP);
+        glVertex3f(0, 0, 0);
+        glVertex3f(0, -1.05, 0);
+        glVertex3f(1.075, -1.05, 0);
         glVertex3f(1.075, 0, 0);
 	glEnd();
 
@@ -284,26 +316,26 @@ void drawOutputArea()
 
 	glBegin(GL_LINE_LOOP);
         glVertex3f(0, 0, 0);
-        glVertex3f(0, -.3, 0);
-        glVertex3f(1.075, -.3, 0);
+        glVertex3f(0, -.25, 0);
+        glVertex3f(1.075, -.25, 0);
         glVertex3f(1.075, 0, 0);
 	glEnd();
 
     int outputstep=90;
-    drawtext(0.01,-.4,0.00050, "Initial bad rate in approved:");
-    drawtext(0.81,-.4,0.00050, ftoa(outp_badrate1*100, "%", prec_output));
-    drawtext(0.01,-.4-outputstep*1/1000.0,0.00045, "Reduced bad rate in approved:");
-    drawtext(0.81,-.4-outputstep*1/1000.0,0.00050, ftoa(outp_badrate2*100, "%", prec_output));
-    drawtext(0.01,-.4-outputstep*2/1000.0,0.00050, "Increased approval rate:");
-    drawtext(0.81,-.4-outputstep*2/1000.0,0.00050, ftoa(outp_apprate3*100, "%", prec_output));
-    drawtext(0.01,-.4-outputstep*3/1000.0,0.00050, "Initial GINI on approved:");
-    drawtext(0.81,-.4-outputstep*3/1000.0,0.00050, ftoa(outp_gini1*100, "%", prec_output));
-    drawtext(0.01,-.4-outputstep*4/1000.0,0.00050, "New GINI on approved");
-    drawtext(0.01,-.4-outputstep*5/1000.0,0.00050, "    (bad rate reduction):");
-    drawtext(0.81,-.4-outputstep*5/1000.0,0.00050, ftoa(outp_gini2*100, "%", prec_output));
-    drawtext(0.01,-.4-outputstep*6/1000.0,0.00050, "New GINI on approved:");
-    drawtext(0.01,-.4-outputstep*7/1000.0,0.00050, "    (approval reduction):");
-    drawtext(0.81,-.4-outputstep*7/1000.0,0.00050, ftoa(outp_gini3*100, "%", prec_output));
+    drawtext(0.01,-.35,0.00050, "Initial bad rate in approved:");
+    drawtext(0.81,-.35,0.00050, ftoa(outp_badrate1*100, "%", prec_output));
+    drawtext(0.01,-.35-outputstep*1/1000.0,0.00045, "Reduced bad rate in approved:");
+    drawtext(0.81,-.35-outputstep*1/1000.0,0.00050, ftoa(outp_badrate2*100, "%", prec_output));
+    drawtext(0.01,-.35-outputstep*2/1000.0,0.00050, "Increased approval rate:");
+    drawtext(0.81,-.35-outputstep*2/1000.0,0.00050, ftoa(outp_apprate3*100, "%", prec_output));
+    drawtext(0.01,-.35-outputstep*3/1000.0,0.00050, "Initial GINI on approved:");
+    drawtext(0.81,-.35-outputstep*3/1000.0,0.00050, ftoa(outp_gini1*100, "%", prec_output));
+    drawtext(0.01,-.35-outputstep*4/1000.0,0.00050, "New GINI on approved");
+    drawtext(0.01,-.35-outputstep*5/1000.0,0.00050, "    (bad rate reduction):");
+    drawtext(0.81,-.35-outputstep*5/1000.0,0.00050, ftoa(outp_gini2*100, "%", prec_output));
+    drawtext(0.01,-.35-outputstep*6/1000.0,0.00050, "New GINI on approved:");
+    drawtext(0.01,-.35-outputstep*7/1000.0,0.00050, "    (approval reduction):");
+    drawtext(0.81,-.35-outputstep*7/1000.0,0.00050, ftoa(outp_gini3*100, "%", prec_output));
 
 	glPopMatrix();
 }
@@ -580,14 +612,14 @@ glTranslatef(0,-.1,0);
         glTranslatef(-.95, -.8, 1);
         glScalef(.8, .8*w_width*1.0/w_height, 1);
         drawGraphArea();
-        glColor3f(0.0, 0.0, 1.0); drawGraph(inp_value[2]*1.0 / inp_gran[2], inp_value[0]*1.0 / inp_gran[0], 4);
-        glColor3f(1.0, 0.0, 0.0); drawGraph(inp_value[2]*1.0 / inp_gran[2], inp_value[1]*1.0 / inp_gran[1], 4);
+        colorChartLine1(); drawGraph(inp_value[2]*1.0 / inp_gran[2], inp_value[0]*1.0 / inp_gran[0], 4);
+        colorChartLine2(); drawGraph(inp_value[2]*1.0 / inp_gran[2], inp_value[1]*1.0 / inp_gran[1], 4);
 	glPopMatrix();
 
     glLineWidth(1);
-	glColor3f(.4, .4, .4);
-    drawInputSelection();
-	glColor3f(.8, .8, 0);
+	colorInputSelection();
+	drawInputSelection();
+	colorInputArea();
     drawInputArea();
 //void recalculate main(float gini1, float gini2, float beta, float badrate, float apprate, float stepsize)
     if(printdebug) {
@@ -600,8 +632,8 @@ glTranslatef(0,-.1,0);
     if (inputbox_flag==false)
     {recalculate(inp_value[0]*1.0/inp_gran[0], inp_value[1]*1.0/inp_gran[1], inp_value[2]*1.0/inp_gran[2], inp_value[3]*1.0/inp_gran[3], inp_value[4]*1.0/inp_gran[4], numsteps[inp_value[5]]);}
     drawOutputArea();
-    glColor3f(.4, .4, .4);
-	if (inputbox_flag==true && inp_numstep[inp_flag]==false) {drawInputBox();};
+    if (inputbox_flag==true && inp_numstep[inp_flag]==false) {colorInputSelection(); drawInputBox();};
+	colorHelpArea(); drawHelpArea();
 
 glPopMatrix();
 	glutSwapBuffers();
