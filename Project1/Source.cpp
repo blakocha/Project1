@@ -47,7 +47,7 @@ int inp_size=6;
 
 //input parameters
 string inp_string [6] = {"GINI1:", "GINI2:", "Beta:", "Total bad rate:", "Approval rate:", "Step size (pp):"};
-int inp_value [6] = {55000, 60000, 500, 25000, 55000, 9};
+int inp_value [6] = {55000, 60000, 500, 25000, 55000, 4};
 int inp_gran [6] = {100000, 100000, 1000, 100000, 100000, 9};
 int inp_min [6] = {0, 0, 0, 1, 1, 0};
 int inp_max [6] = {100000, 100000, 1000, 99999, 99999, 9};
