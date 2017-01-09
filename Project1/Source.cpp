@@ -133,9 +133,18 @@ void handleKeypress(unsigned char key, //The key that was pressed
 
 	if (key=='.') {
             if (inputbox_comma==false)
-            {inputbox_comma=true;
-            inputbox_string=inputbox_string+'.';
-            inputbox_string_len++; glutPostRedisplay();};
+			{
+			inputbox_flag = true;
+			inputbox_comma=true;
+            if (inputbox_string=="") {
+				inputbox_string = inputbox_string + '0' + '.';
+				inputbox_string_len=inputbox_string_len+2;
+			}
+			else {
+				inputbox_string = inputbox_string + '.';
+				inputbox_string_len++;
+			}
+			glutPostRedisplay();};
 	}
 }
 
