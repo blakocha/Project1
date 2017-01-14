@@ -21,6 +21,9 @@ int prec_input=3;
 int prec_output=4;
 int prec_outputmain=6;
 
+int temp_x=0;
+int temp_y=0;
+
 //local version of float to text with specified unit and precision
 string ftoa(double value, string unit="", int prec=1) {
 	ostringstream o;
@@ -39,11 +42,9 @@ string ctoa(unsigned char digit, string unit="") {
 //window size
 int w_width = 640; int w_height = 480;
 
-//input flag - current input to be highlighted
-int inp_flag=0;
-
-//number of inputs
-int inp_size=6;
+int inp_flag=0; //input flag - current input to be highlighted
+int inp_size=6; //number of inputs
+bool inp_click=false; //if true, mouseclick should activate inputbox
 
 //input parameters
 string inp_string [6] = {"GINI1:", "GINI2:", "Beta:", "Total bad rate:", "Approval rate:", "Step size (pp):"};
@@ -96,6 +97,13 @@ string numstepsize(int value, string unit="") {
 	return o.str();
 }
 
+void inputConfirm() {
+	    if (inputbox_string_len>0) {
+	    inp_value[inp_flag]=static_cast<int>(roundf(atof(inputbox_string.c_str())*inp_gran[inp_flag]/inp_format1[inp_flag]));
+        inp_value[inp_flag]=min(max(inp_value[inp_flag], inp_min[inp_flag]),inp_max[inp_flag]);}
+        inputNullify();
+}
+
 void handleKeypress(unsigned char key, //The key that was pressed
 	int x, int y) {    //The current mouse coordinates
     int mod;
@@ -103,8 +111,10 @@ void handleKeypress(unsigned char key, //The key that was pressed
     mod=glutGetModifiers(); //to check if Shift is pressed
 
 	switch (key) {
+
 	case 27: //Escape key
-		exit(0); //Exit the program
+		inputNullify(); glutPostRedisplay(); break;
+
 	case 9: //tab
         if (mod==GLUT_ACTIVE_SHIFT) //if Shift is pressed -> go backwards
         {if (inp_flag==0)
@@ -114,13 +124,16 @@ void handleKeypress(unsigned char key, //The key that was pressed
         else {inp_flag = (inp_flag + 1)%inp_size ; }; //if shift is not pressed -> proceed +1
 		inputNullify(); //input is cancelled - without enter!
 		glutPostRedisplay(); break;
+
 	case 8: //backspace pressed - cancel input
-		inputNullify(); glutPostRedisplay(); break;
+		if (inputbox_string_len>0)
+            {inputbox_string.pop_back();
+            inputbox_string_len--;
+            glutPostRedisplay(); }
+        break;
+
 	case 13: //enter pressed
-	    if (inputbox_string_len>0) {
-	    inp_value[inp_flag]=static_cast<int>(roundf(atof(inputbox_string.c_str())*inp_gran[inp_flag]/inp_format1[inp_flag]));
-        inp_value[inp_flag]=min(max(inp_value[inp_flag], inp_min[inp_flag]),inp_max[inp_flag]);}
-        inputNullify();
+        inputConfirm();
         glutPostRedisplay(); break;
 	case 'q':
 		exit(0);
@@ -221,7 +234,7 @@ void drawtexth(float x_pos, float y_pos, float scale, string text)
 
 void drawInputBox()
 {
-    float w1=.01;
+    float w1=.02;
     glPushMatrix();
     glTranslatef(-.9,.7,0);
 	glBegin(GL_TRIANGLE_STRIP);
@@ -231,6 +244,7 @@ void drawInputBox()
         glVertex3f(inp_x[inp_flag]+.4-w1, inp_y[inp_flag]-w1, 0);
         glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
     glEnd();
+
     colorInputText();
     glLineWidth(2);
     drawtext(inp_x[inp_flag],inp_y[inp_flag],0.0005, inputbox_string);
@@ -247,11 +261,11 @@ void drawInputSelection()
     glPushMatrix();
     glTranslatef(-.9,.7,0);
 	glBegin(GL_TRIANGLE_STRIP);
-        glVertex3f(inp_x[inp_flag]-w1+.01, inp_y[inp_flag]-w1, 0);
-        glVertex3f(inp_x[inp_flag]-w1+.01, inp_y[inp_flag]+.1-w1, 0);
+        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
+        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]+.1-w1, 0);
         glVertex3f(inp_x[inp_flag]+.3-w1, inp_y[inp_flag]+.1-w1, 0);
         glVertex3f(inp_x[inp_flag]+.3-w1, inp_y[inp_flag]-w1, 0);
-        glVertex3f(inp_x[inp_flag]-w1+.01, inp_y[inp_flag]-w1, 0);
+        glVertex3f(inp_x[inp_flag]-w1, inp_y[inp_flag]-w1, 0);
     glEnd();
     glPopMatrix();
 
@@ -360,6 +374,34 @@ void drawGraph(float beta, float gini, float width)
 	}
 	glEnd();
 }
+
+void handleMouseclick(int button, int state, int x, int y)
+{
+  if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+  {
+    if (inputbox_flag==false && inp_click) {inputbox_flag=true;}
+    else inputConfirm();
+  }
+}
+
+
+void handleMouseover(int x, int y)
+{
+    temp_x=x;
+    temp_y=y;
+
+    int i=0;
+    inp_click=false;
+    for (i=0;i<inp_size;i++)
+    {
+        if (inp_x[i]*320+30<=temp_x && temp_x<=inp_x[i]*320+30+94 && inp_y[i]*(-240)+78<=temp_y && temp_y<=inp_y[i]*(-240)+78+21)
+            {if (inp_flag!=i) {inputNullify(); inp_flag=i;} inp_click=true; }
+    }
+
+    glutPostRedisplay();
+}
+
+
 
 void recalculate(float gini1, float gini2, float beta, float badrate, float apprate, float stepsize)
 {
@@ -642,7 +684,10 @@ glTranslatef(0,-.1,0);
     {recalculate(inp_value[0]*1.0/inp_gran[0], inp_value[1]*1.0/inp_gran[1], inp_value[2]*1.0/inp_gran[2], inp_value[3]*1.0/inp_gran[3], inp_value[4]*1.0/inp_gran[4], numsteps[inp_value[5]]);}
     drawOutputArea();
     if (inputbox_flag==true && inp_numstep[inp_flag]==false) {colorInputSelection(); drawInputBox();};
-	colorHelpArea(); drawHelpArea();
+	colorHelpArea();
+	drawHelpArea();
+
+
 
 glPopMatrix();
 	glutSwapBuffers();
@@ -657,6 +702,8 @@ int main(int argc, char **argv)
 	glutDisplayFunc(display);
 	glutSpecialFunc(handleSpecialpress);
 	glutKeyboardFunc(handleKeypress);
+	glutMouseFunc(handleMouseclick);
+	glutPassiveMotionFunc(handleMouseover);
 	glutMainLoop();
 	return 0;
 }
