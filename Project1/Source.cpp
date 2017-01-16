@@ -41,6 +41,7 @@ string ctoa(unsigned char digit, string unit="") {
 
 //window size
 int w_width = 640; int w_height = 480;
+int act_width = 640; int act_height = 480;
 
 int inp_flag=0; //input flag - current input to be highlighted
 int inp_size=6; //number of inputs
@@ -394,13 +395,19 @@ void handleMouseover(int x, int y)
     inp_click=false;
     for (i=0;i<inp_size;i++)
     {
-        if (inp_x[i]*320+30<=temp_x && temp_x<=inp_x[i]*320+30+94 && inp_y[i]*(-240)+78<=temp_y && temp_y<=inp_y[i]*(-240)+78+21)
+        if (inp_x[i]*320+30<=temp_x*w_width/act_width && temp_x*w_width/act_width<=inp_x[i]*320+30+94 && inp_y[i]*(-240)+78<=temp_y*w_height/act_height && temp_y*w_height/act_height<=inp_y[i]*(-240)+78+21)
             {if (inp_flag!=i) {inputNullify(); inp_flag=i;} inp_click=true; }
     }
 
     glutPostRedisplay();
 }
 
+void handleReshape(int newWidth, int newHeight )
+{
+    act_width=newWidth; act_height=newHeight;
+    glViewport(0,0,newWidth,newHeight);
+    glutPostRedisplay();
+}
 
 
 void recalculate(float gini1, float gini2, float beta, float badrate, float apprate, float stepsize)
@@ -704,6 +711,7 @@ int main(int argc, char **argv)
 	glutKeyboardFunc(handleKeypress);
 	glutMouseFunc(handleMouseclick);
 	glutPassiveMotionFunc(handleMouseover);
+	glutReshapeFunc(handleReshape);
 	glutMainLoop();
 	return 0;
 }
