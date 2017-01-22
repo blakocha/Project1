@@ -54,8 +54,8 @@ int inp_gran [6] = {100000, 100000, 1000, 100000, 100000, 9};
 int inp_min [6] = {0, 0, 0, 1, 1, 0};
 int inp_max [6] = {100000, 100000, 1000, 99999, 99999, 9};
 int inp_step [6] = {500, 500, 5, 500, 500, 1};
-float inp_xs [6] = {.02, .02, .02, .6, .6, .6};
-float inp_x [6] = {.2, .2, .2, 1.1, 1.1, 1.1};
+float inp_xs [6] = {.02, .02, .02, .7, .7, .7};
+float inp_x [6] = {.25, .25, .25, 1.15, 1.15, 1.15};
 float inp_y [6] = {-.1, -.2, -.3, -.1, -.2, -.3};
 float inp_format1 [6] = {100, 100, 1, 100, 100, 1};
 string inp_format2 [6] = {"%", "%", "", "%", "%", " pp"};
@@ -65,6 +65,9 @@ bool inputbox_flag=false; //a flag if input box is active
 string inputbox_string=""; //string being input
 int inputbox_string_len=0; //length of the string being input
 bool inputbox_comma=false; //if a coma has been input
+int inp_flag_prev=0;
+int inp_value_prev=inp_value[inp_flag_prev];
+bool inp_undo_flag=false;
 
 //output parameters
 double outp_badratereduction=-.99999999;
@@ -100,9 +103,22 @@ string numstepsize(int value, string unit="") {
 
 void inputConfirm() {
 	    if (inputbox_string_len>0) {
+        inp_flag_prev=inp_flag;
+        inp_value_prev=inp_value[inp_flag_prev];
 	    inp_value[inp_flag]=static_cast<int>(roundf(atof(inputbox_string.c_str())*inp_gran[inp_flag]/inp_format1[inp_flag]));
         inp_value[inp_flag]=min(max(inp_value[inp_flag], inp_min[inp_flag]),inp_max[inp_flag]);}
         inputNullify();
+}
+
+void undo() {
+    int temp_inp_value;
+    if (inputbox_flag==false) {
+    inp_flag=inp_flag_prev;
+    temp_inp_value=inp_value[inp_flag_prev];
+    inp_value[inp_flag_prev]=inp_value_prev;
+    inp_value_prev=temp_inp_value;
+    glutPostRedisplay();
+    }
 }
 
 void handleKeypress(unsigned char key, //The key that was pressed
@@ -126,6 +142,10 @@ void handleKeypress(unsigned char key, //The key that was pressed
 		inputNullify(); //input is cancelled - without enter!
 		glutPostRedisplay(); break;
 
+    case 'z': //Ctrl+Z to undo
+                undo();
+        break;
+
 	case 8: //backspace pressed - cancel input
 		if (inputbox_string_len>0)
             {inputbox_string.pop_back();
@@ -142,10 +162,13 @@ void handleKeypress(unsigned char key, //The key that was pressed
 
 	if (key>='0' && key<='9') {
             inputbox_flag=true;
+            if (inp_numstep[inp_flag]==false) {
             inputbox_string=inputbox_string+ctoa(key);
-            inputbox_string_len++; glutPostRedisplay();};
+            inputbox_string_len++; }
+            glutPostRedisplay();};
 
-	if (key=='.') {
+	if (key=='.' or key==',') {
+            if (inp_numstep[inp_flag]==false) {
             if (inputbox_comma==false)
 			{
 			inputbox_flag = true;
@@ -158,21 +181,37 @@ void handleKeypress(unsigned char key, //The key that was pressed
 				inputbox_string = inputbox_string + '.';
 				inputbox_string_len++;
 			}
+			}
 			glutPostRedisplay();};
 	}
 }
 
 void handleSpecialpress(int key, //The key that was pressed
 	int x, int y) {    //The current mouse coordinates
+
+	if (inputbox_flag==false)
+	{
+
 	switch (key) {
 	case GLUT_KEY_UP:
-		inp_value[inp_flag] = min(inp_value[inp_flag] + inp_step[inp_flag],inp_max[inp_flag]); glutPostRedisplay(); break;
+        inp_flag_prev=inp_flag;
+        inp_value_prev=inp_value[inp_flag_prev];
+		inp_value[inp_flag] = min(inp_value[inp_flag] + inp_step[inp_flag],inp_max[inp_flag]);
+		glutPostRedisplay();
+		break;
 	case GLUT_KEY_DOWN:
+        inp_flag_prev=inp_flag;
+        inp_value_prev=inp_value[inp_flag_prev];
 		inp_value[inp_flag]= max(inp_min[inp_flag],inp_value[inp_flag]- inp_step[inp_flag]); glutPostRedisplay(); break;
 	case GLUT_KEY_RIGHT:
+        inp_flag_prev=inp_flag;
+        inp_value_prev=inp_value[inp_flag_prev];
 		inp_value[inp_flag] = min(inp_value[inp_flag] + 1,inp_max[inp_flag]); glutPostRedisplay(); break;
 	case GLUT_KEY_LEFT:
+        inp_flag_prev=inp_flag;
+        inp_value_prev=inp_value[inp_flag_prev];
 		inp_value[inp_flag]= max(inp_min[inp_flag],inp_value[inp_flag]- 1); glutPostRedisplay(); break;
+	}
 	}
 }
 
@@ -281,8 +320,8 @@ void drawInputArea()
 	glBegin(GL_LINE_LOOP);
         glVertex3f(0, 0, 0);
         glVertex3f(0, -0.35, 0);
-        glVertex3f(1.5, -0.35, 0);
-        glVertex3f(1.5, 0, 0);
+        glVertex3f(1.6, -0.35, 0);
+        glVertex3f(1.6, 0, 0);
 	glEnd();
 
     drawtext(0.02,.05,0.0005, "Inputs:");
@@ -312,10 +351,18 @@ void drawHelpArea()
         glVertex3f(1.55, 0, 0);
 	glEnd();
 
+	if (inputbox_flag==true)
+        if (inp_numstep[inp_flag]){
+            drawtext(0.05,-.13,2,"Use ARROWS to change the step in numeric calculations.");
+            drawtext(0.05,-.23,2,"Press ENTER to close this message.");}
+        else
+            {drawtext(0.05,-.13,2,"Use digits and a dot. Press ENTER to confirm. ");}
+    else {
 	drawtexth(0.05,-.06,2,"Use TAB / SHIFT+TAB to select the input variable to be changed. To change ");
 	drawtexth(0.05,-.13,2,"the value of the input variable: (1) use arrows RIGHT/LEFT for small changes, ");
 	drawtexth(0.05,-.20,2,"UP/DOWN for bigger ones or (2) use numeric keys, dot as decimal point + ENTER. ");
-	drawtexth(0.05,-.27,2,"Option (2) not available for step size. Q quits. ");
+	drawtexth(0.05,-.27,2,"Option (2) not available for step size. Press 'Z' to undo, 'Q' to quit. ");
+	}
 
 	glPopMatrix();
 }
