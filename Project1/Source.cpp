@@ -167,7 +167,7 @@ void handleKeypress(unsigned char key, //The key that was pressed
             inputbox_string_len++; }
             glutPostRedisplay();};
 
-	if (key=='.' or key==',') {
+	if (key=='.' || key==',') {
             if (inp_numstep[inp_flag]==false) {
             if (inputbox_comma==false)
 			{
