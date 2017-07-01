@@ -405,7 +405,7 @@ void drawOutputArea()
     drawtext(0.01,-.35-outputstep*5/1000.0,0.00050, "    (bad rate reduction):");
     drawtext(0.81,-.35-outputstep*5/1000.0,0.00050, ftoa(outp_gini2*100, "%", prec_output));
     drawtext(0.01,-.35-outputstep*6/1000.0,0.00050, "New GINI on approved:");
-    drawtext(0.01,-.35-outputstep*7/1000.0,0.00050, "    (approval reduction):");
+    drawtext(0.01,-.35-outputstep*7/1000.0,0.00050, "    (approval increase):");
     drawtext(0.81,-.35-outputstep*7/1000.0,0.00050, ftoa(outp_gini3*100, "%", prec_output));
 
 	glPopMatrix();
