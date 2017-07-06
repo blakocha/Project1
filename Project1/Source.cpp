@@ -417,7 +417,7 @@ void drawGraph(float beta, float gini, float width)
 	glBegin(GL_LINE_STRIP);
 	for (float t = 0; t <= 1; t += 0.01) {
 		float x = t;
-		float y = beta*(pow(x, (1 - gini) / (1 + gini))) + (1 - beta)*(1 - pow((1 - x), (1 + gini) / (1 - gini)));
+		float y = (1-beta)*(pow(x, (1 - gini) / (1 + gini))) + (beta)*(1 - pow((1 - x), (1 + gini) / (1 - gini)));
 		glVertex3f(x, y, 0);
 	}
 	glEnd();
@@ -520,8 +520,8 @@ void recalculate(float gini1, float gini2, float beta, float badrate, float appr
     {
 
         x = (t+1)*stepsize/100.0;
-        y1 = beta*(pow(x, (1 - gini1) / (1 + gini1))) + (1 - beta)*(1 - pow((1 - x), (1 + gini1) / (1 - gini1)));
-        y2 = beta*(pow(x, (1 - gini2) / (1 + gini2))) + (1 - beta)*(1 - pow((1 - x), (1 + gini2) / (1 - gini2)));
+        y1 = (1-beta)*(pow(x, (1 - gini1) / (1 + gini1))) + (beta)*(1 - pow((1 - x), (1 + gini1) / (1 - gini1)));
+        y2 = (1-beta)*(pow(x, (1 - gini2) / (1 + gini2))) + (beta)*(1 - pow((1 - x), (1 + gini2) / (1 - gini2)));
         if (t==numberofsteps-1 && workaround==true) {
                 y1=1; y2=1;
                 if (printdebug) {cout << x << " " << y1 << " " << y2 << " " << y1_prev << " " << y2_prev << endl;}
